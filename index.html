@@ -20,15 +20,6 @@
             flex-direction: column;
         }
         
-        /* iOS Toggle Switch */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #34D399;
-        }
-        .toggle-checkbox:checked + .toggle-label {
-            background-color: #34D399;
-        }
-
         .card-enter {
             animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -38,11 +29,14 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        /* Removed fixed color from .tab-active 
+           Colors are now handled dynamically via utility classes in JS 
+        */
         .tab-active {
-            color: #2563EB;
+            font-weight: 600; /* Optional: make active tab slightly bolder */
         }
         .tab-inactive {
-            color: #9CA3AF;
+            color: #9CA3AF; /* gray-400 */
         }
 
         /* Hide Scrollbar */
@@ -61,13 +55,13 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Header - Export Button removed -->
-    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-gray-200 pt-12 pb-2 px-4 flex justify-between items-end">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900" id="headerTitle">想法库</h1>
-            <p class="text-xs text-gray-500 mt-0.5" id="headerSubtitle">清空大脑，保持专注</p>
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-gray-200 pt-12 pb-3 px-4 relative flex justify-center items-end">
+        <div class="text-center">
+            <h1 class="text-[25px] font-bold text-gray-900" id="headerTitle">待办清单</h1>
+            <p class="text-[10px] text-gray-500 mt-0.5" id="headerSubtitle">大脑用来思考，系统用来记录</p>
         </div>
-        <div class="text-sm text-gray-400 font-medium" id="itemCount">0 条记录</div>
+        <div class="absolute right-4 bottom-3.5 text-xs text-gray-400 font-medium" id="itemCount">0 条记录</div>
     </header>
 
     <!-- Main List Container -->
@@ -75,49 +69,44 @@
         <!-- Content injected here -->
     </main>
 
-    <!-- Empty State (Hidden by default) -->
-    <div id="emptyState" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center opacity-40">
-        <i class="fas fa-feather-alt text-5xl mb-4 text-gray-400"></i>
-        <p class="text-gray-500 font-medium">大脑空空<br>非常轻松</p>
-    </div>
+    <!-- Empty State Removed -->
 
-    <!-- Add Button (FAB) -->
-    <button onclick="openModal()" class="fixed bottom-24 right-6 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-2xl z-20 transition-transform active:scale-90">
+    <!-- Add Button (FAB) - Changed to Red Theme -->
+    <button onclick="openModal()" class="fixed bottom-24 right-6 bg-red-500 hover:bg-red-600 text-white w-14 h-14 rounded-full shadow-lg shadow-red-500/30 flex items-center justify-center text-2xl z-20 transition-transform active:scale-90">
         <i class="fas fa-plus"></i>
     </button>
 
     <!-- Bottom Tab Bar -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center safe-bottom z-20 text-xs font-medium">
-        <button onclick="switchTab('ideas')" class="flex-1 py-3 flex flex-col items-center gap-1 tab-active" id="tab-ideas">
-            <i class="fas fa-lightbulb text-xl"></i>
-            <span>念头</span>
-        </button>
-        <button onclick="switchTab('todos')" class="flex-1 py-3 flex flex-col items-center gap-1 tab-inactive" id="tab-todos">
+        <button onclick="switchTab('todos')" class="flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200" id="tab-todos">
             <i class="fas fa-check-circle text-xl"></i>
             <span>待办</span>
         </button>
+        <button onclick="switchTab('ideas')" class="flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200" id="tab-ideas">
+            <i class="fas fa-lightbulb text-xl"></i>
+            <span>念头</span>
+        </button>
     </nav>
 
-    <!-- Input Modal - Adjusted to be near top to avoid keyboard overlapping buttons -->
+    <!-- Input Modal -->
     <div id="inputModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-start justify-center pt-20 transition-opacity duration-200 opacity-0">
-        <!-- Modal Panel - Unified rounded corners, added max-width, added mx-4 for side margins -->
         <div class="bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl transform translate-y-8 transition-transform duration-300 ease-out mx-4" id="modalPanel">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-3">
                 <span class="text-gray-500 font-medium text-sm">记录新内容</span>
                 <button onclick="closeModal()" class="text-gray-400 bg-gray-100 w-8 h-8 rounded-full"><i class="fas fa-times"></i></button>
             </div>
             
             <textarea id="inputContent" rows="3" placeholder="刚才想到了什么？或者有什么任务？" class="w-full bg-gray-50 text-lg p-3 rounded-xl border-none focus:ring-2 focus:ring-blue-500 mb-4 resize-none"></textarea>
             
+            <!-- Buttons Swapped: Todo on Left (Red), Idea on Right (Yellow) -->
             <div class="flex gap-3">
-                <button onclick="saveItem('idea')" class="flex-1 bg-yellow-100 text-yellow-700 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-yellow-200">
-                    <i class="fas fa-lightbulb"></i> 存为念头
+                <button onclick="saveItem('todo')" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-red-600">
+                    <i class="fas fa-check"></i> 设为待办
                 </button>
-                <button onclick="saveItem('todo')" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-blue-700">
-                    <i class="fas fa-check"></i> 存为待办
+                <button onclick="saveItem('idea')" class="flex-1 bg-yellow-100 text-yellow-700 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-yellow-200">
+                    <i class="fas fa-lightbulb"></i> 收入念头
                 </button>
             </div>
-            <!-- Removed safe-bottom spacer as it is now at top -->
         </div>
     </div>
 
@@ -136,98 +125,58 @@
         // Data Structure
         // Item: { id, text, type: 'idea'|'todo', created, completed: boolean }
         let items = JSON.parse(localStorage.getItem('mindclear_items')) || [];
-        let currentTab = 'ideas'; // 'ideas' or 'todos'
+        
+        let currentTab = 'todos'; 
+
+        // Initialize Tab based on content
+        const todoCount = items.filter(i => i.type === 'todo').length;
+        const ideaCount = items.filter(i => i.type === 'idea').length;
+        if (todoCount === 0 && ideaCount > 0) {
+            currentTab = 'ideas';
+        }
 
         // DOM Elements
         const mainContainer = document.getElementById('mainContainer');
-        const emptyState = document.getElementById('emptyState');
+        // Removed emptyState element reference
         const inputModal = document.getElementById('inputModal');
         const modalPanel = document.getElementById('modalPanel');
         const inputContent = document.getElementById('inputContent');
         const headerTitle = document.getElementById('headerTitle');
-        const headerSubtitle = document.getElementById('headerSubtitle');
         const itemCount = document.getElementById('itemCount');
+        
+        // Custom Alert Elements
         const alertModal = document.getElementById('alertModal');
         const alertTitle = document.getElementById('alertTitle');
         const alertMessage = document.getElementById('alertMessage');
         const alertButtons = document.getElementById('alertButtons');
 
         // Initial Render
-        render();
-
-        // --- Custom Alert/Confirm Functions (Replaces native confirm/alert) ---
-        let resolveAlertPromise;
-
-        /**
-         * Shows a custom modal dialog (replaces native confirm/alert).
-         * @param {string} title - The title of the dialog.
-         * @param {string} message - The message content.
-         * @param {boolean} isConfirm - If true, shows OK/Cancel buttons (confirm behavior), otherwise shows only OK (alert behavior).
-         * @returns {Promise<boolean>} Resolves with true if OK/Confirm is pressed, false if Cancel is pressed (only for confirm).
-         */
-        function customConfirm(title, message, isConfirm = true) {
-            return new Promise(resolve => {
-                resolveAlertPromise = resolve;
-                alertTitle.innerText = title;
-                alertMessage.innerText = message;
-                alertButtons.innerHTML = ''; // Clear existing buttons
-
-                // Common Button Style
-                const btnClass = "flex-1 py-2 rounded-lg font-medium transition duration-150 active:scale-[0.98]";
-
-                // Cancel Button (for Confirm)
-                if (isConfirm) {
-                    const cancelBtn = document.createElement('button');
-                    cancelBtn.innerText = '取消';
-                    cancelBtn.className = `${btnClass} bg-gray-100 text-gray-700 hover:bg-gray-200`;
-                    cancelBtn.onclick = () => { closeAlert(false); };
-                    alertButtons.appendChild(cancelBtn);
-                }
-
-                // OK/Confirm Button
-                const okBtn = document.createElement('button');
-                okBtn.innerText = isConfirm ? '确定' : '好的';
-                okBtn.className = `${btnClass} ${isConfirm ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`;
-                okBtn.onclick = () => { closeAlert(true); };
-                alertButtons.appendChild(okBtn);
-
-                // Show modal with transition
-                alertModal.classList.remove('hidden');
-                void alertModal.offsetWidth; // Trigger reflow
-                alertModal.classList.remove('opacity-0');
-                alertModal.querySelector('div').classList.remove('scale-90');
-            });
-        }
-
-        function closeAlert(result) {
-            alertModal.classList.add('opacity-0');
-            alertModal.querySelector('div').classList.add('scale-90');
-            
-            setTimeout(() => {
-                alertModal.classList.add('hidden');
-                if (resolveAlertPromise) {
-                    resolveAlertPromise(result);
-                    resolveAlertPromise = null;
-                }
-            }, 300);
-        }
+        switchTab(currentTab);
 
         // --- Core Functions ---
 
         function switchTab(tab) {
             currentTab = tab;
             
-            // Update UI Tabs
-            document.getElementById('tab-ideas').className = `flex-1 py-3 flex flex-col items-center gap-1 ${tab === 'ideas' ? 'tab-active' : 'tab-inactive'}`;
-            document.getElementById('tab-todos').className = `flex-1 py-3 flex flex-col items-center gap-1 ${tab === 'todos' ? 'tab-active' : 'tab-inactive'}`;
-            
-            // Update Header
-            if (tab === 'ideas') {
-                headerTitle.innerText = "想法库";
-                headerSubtitle.innerText = "捕捉每一个闪念";
-            } else {
+            const todoBtn = document.getElementById('tab-todos');
+            const ideaBtn = document.getElementById('tab-ideas');
+
+            // Reset base classes
+            todoBtn.className = "flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200";
+            ideaBtn.className = "flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200";
+
+            if (tab === 'todos') {
+                // Todos Active: Red
+                todoBtn.classList.add('text-red-500', 'tab-active');
+                ideaBtn.classList.add('text-gray-400', 'tab-inactive');
+                
                 headerTitle.innerText = "待办清单";
-                headerSubtitle.innerText = "一件一件完成";
+            } else {
+                // Ideas Active: Yellow
+                todoBtn.classList.add('text-gray-400', 'tab-inactive');
+                ideaBtn.classList.add('text-yellow-600', 'tab-active');
+                
+                headerTitle.innerText = "念头";
             }
 
             render();
@@ -236,22 +185,16 @@
         function render() {
             mainContainer.innerHTML = '';
             
-            // Filter Items
             const filteredItems = items
                 .filter(item => item.type === (currentTab === 'ideas' ? 'idea' : 'todo'))
-                .sort((a, b) => b.created - a.created); // Newest first
+                .sort((a, b) => b.created - a.created);
 
             itemCount.innerText = `${filteredItems.length} 条`;
 
-            if (filteredItems.length === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                emptyState.style.display = 'none';
-                filteredItems.forEach(item => {
-                    const el = createItemElement(item);
-                    mainContainer.appendChild(el);
-                });
-            }
+            // Simplified render logic: no empty state to toggle
+            filteredItems.forEach(item => {
+                mainContainer.appendChild(createItemElement(item));
+            });
         }
 
         function createItemElement(item) {
@@ -259,42 +202,50 @@
             div.className = `bg-white p-4 rounded-xl shadow-sm flex items-start gap-3 card-enter ${item.completed ? 'opacity-50' : ''}`;
             
             const date = new Date(item.created);
-            // Format time as M/D HH:MM
             const timeStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
             let actionBtn = '';
-            let icon = '';
+            let mainIcon = '';
 
+            // Icon logic
             if (item.type === 'idea') {
-                icon = `<div class="mt-1 text-yellow-500"><i class="fas fa-lightbulb"></i></div>`;
-                // Convert Idea to Todo Button
+                mainIcon = `<div class="mt-1 text-yellow-500 text-lg w-6 text-center"><i class="fas fa-lightbulb"></i></div>`;
+                
+                // Convert to Todo (Now Red Theme)
                 actionBtn = `
-                    <button onclick="convertToTodo(${item.id})" class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-medium ml-auto transition-colors active:scale-[0.98]">
+                    <button onclick="convertToTodo(${item.id})" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium ml-auto transition-colors active:scale-[0.98]">
                         转为待办
                     </button>
                 `;
             } else {
-                // Checkbox for Todo
-                const checkIcon = item.completed ? 'fa-check-square text-blue-500' : 'fa-square text-gray-300';
-                icon = `<button onclick="toggleTodo(${item.id})" class="mt-1 text-2xl transition-colors active:scale-95"><i class="far ${checkIcon}"></i></button>`;
+                // Checkbox (Now Red Theme)
+                const checkIcon = item.completed ? 'fa-check-square text-red-500' : 'fa-square text-gray-300';
+                mainIcon = `<button onclick="toggleTodo(${item.id})" class="mt-1 text-2xl transition-colors active:scale-95"><i class="far ${checkIcon}"></i></button>`;
+
+                actionBtn = `
+                    <button onclick="convertToIdea(${item.id})" class="text-xs bg-yellow-50 text-yellow-600 px-3 py-1.5 rounded-lg font-medium ml-auto transition-colors active:scale-[0.98]">
+                        转为念头
+                    </button>
+                `;
             }
 
-            // Delete Button
-            const deleteBtn = `
-                <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500 p-2 -mr-2 transition-colors active:scale-95">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
             div.innerHTML = `
-                ${icon}
+                ${mainIcon}
                 <div class="flex-1 min-w-0">
-                    <p class="text-gray-800 text-base leading-relaxed break-words ${item.completed ? 'line-through text-gray-400' : ''}">${item.text}</p>
+                    <div class="flex items-start justify-between">
+                        <p class="text-gray-800 text-base leading-relaxed break-words ${item.completed ? 'line-through text-gray-400' : ''}">
+                            ${item.text}
+                        </p>
+                    </div>
                     <div class="flex items-center justify-between mt-2">
-                        <span class="text-xs text-gray-400">${timeStr}</span>
+                        <div class="flex items-center">
+                            <span class="text-xs text-gray-400">${timeStr}</span>
+                        </div>
                         <div class="flex items-center gap-2">
                             ${actionBtn}
-                            ${deleteBtn}
+                            <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500 p-2 -mr-2 transition-colors active:scale-95">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -311,7 +262,7 @@
             const newItem = {
                 id: Date.now(),
                 text: text,
-                type: type, // 'idea' or 'todo'
+                type: type, 
                 created: Date.now(),
                 completed: false
             };
@@ -321,14 +272,13 @@
             
             closeModal();
             
-            // Auto switch to the tab where we added the item
             if (currentTab !== 'ideas' && type === 'idea') switchTab('ideas');
             else if (currentTab !== 'todos' && type === 'todo') switchTab('todos');
             else render();
         }
 
         async function deleteItem(id) {
-            const confirmed = await customConfirm('确认删除', '这条记录将被永久删除，确定吗？');
+            const confirmed = await customConfirm('确认删除', '是否将此项永久移除？');
             if (confirmed) {
                 items = items.filter(i => i.id !== id);
                 localStorage.setItem('mindclear_items', JSON.stringify(items));
@@ -350,28 +300,67 @@
             if (item) {
                 item.type = 'todo';
                 localStorage.setItem('mindclear_items', JSON.stringify(items));
-                
-                // Optional: switch to todo tab to show it landed there
                 switchTab('todos');
             }
         }
 
-        // --- Modal Logic ---
+        function convertToIdea(id) {
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.type = 'idea';
+                item.completed = false;
+                localStorage.setItem('mindclear_items', JSON.stringify(items));
+                switchTab('ideas');
+            }
+        }
+
+        // --- Modal & Alert Logic ---
+        
+        function customConfirm(title, message, isConfirm = true) {
+            return new Promise(resolve => {
+                resolveAlertPromise = resolve;
+                alertTitle.innerText = title;
+                alertMessage.innerText = message;
+                alertButtons.innerHTML = ''; 
+
+                const btnClass = "flex-1 py-2 rounded-lg font-medium transition duration-150 active:scale-[0.98]";
+                if (isConfirm) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.innerText = '取消';
+                    cancelBtn.className = `${btnClass} bg-gray-100 text-gray-700 hover:bg-gray-200`;
+                    cancelBtn.onclick = () => { closeAlert(false); };
+                    alertButtons.appendChild(cancelBtn);
+                }
+                const okBtn = document.createElement('button');
+                okBtn.innerText = isConfirm ? '确定' : '好的';
+                okBtn.className = `${btnClass} ${isConfirm ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`;
+                okBtn.onclick = () => { closeAlert(true); };
+                alertButtons.appendChild(okBtn);
+
+                alertModal.classList.remove('hidden');
+                void alertModal.offsetWidth;
+                alertModal.classList.remove('opacity-0');
+                alertModal.querySelector('div').classList.remove('scale-90');
+            });
+        }
+
+        function closeAlert(result) {
+            alertModal.classList.add('opacity-0');
+            alertModal.querySelector('div').classList.add('scale-90');
+            setTimeout(() => {
+                alertModal.classList.add('hidden');
+                if (resolveAlertPromise) {
+                    resolveAlertPromise(result);
+                    resolveAlertPromise = null;
+                }
+            }, 300);
+        }
 
         function openModal() {
-            // 1. Remove display: none immediately so element exists
             inputModal.classList.remove('hidden');
-            
-            // 2. CRITICAL FOR iOS: Focus immediately. 
-            // We must call focus() synchronously within the user's click event.
-            // If we wait for animation or setTimeout, iOS blocks the keyboard.
             inputContent.focus();
-
-            // 3. Trigger Animations
-            // Force reflow to ensure transition plays
             void inputModal.offsetWidth;
             inputModal.classList.remove('opacity-0');
-            // Changed from translate-y-full to translate-y-8 for a subtle slide-up effect at the top
             modalPanel.classList.remove('translate-y-8');
         }
 
@@ -381,12 +370,10 @@
             setTimeout(() => {
                 inputModal.classList.add('hidden');
                 inputContent.value = '';
-                // Blur to hide keyboard
                 inputContent.blur();
             }, 300);
         }
 
-        // Close modal if clicking outside
         inputModal.addEventListener('click', (e) => {
             if (e.target === inputModal) closeModal();
         });
