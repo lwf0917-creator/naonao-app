@@ -359,16 +359,19 @@
         // --- Modal Logic ---
 
         function openModal() {
+            // 1. Remove display: none immediately so element exists
             inputModal.classList.remove('hidden');
-            // Force reflow
+            
+            // 2. CRITICAL FOR iOS: Focus immediately. 
+            // We must call focus() synchronously within the user's click event.
+            // If we wait for animation or setTimeout, iOS blocks the keyboard.
+            inputContent.focus();
+
+            // 3. Trigger Animations
+            // Force reflow to ensure transition plays
             void inputModal.offsetWidth;
             inputModal.classList.remove('opacity-0');
             modalPanel.classList.remove('translate-y-full');
-            
-            // FIX 1: Add a slight delay for more reliable focus on iOS/Safari
-            setTimeout(() => {
-                inputContent.focus();
-            }, 10);
         }
 
         function closeModal() {
@@ -377,6 +380,8 @@
             setTimeout(() => {
                 inputModal.classList.add('hidden');
                 inputContent.value = '';
+                // Blur to hide keyboard
+                inputContent.blur();
             }, 300);
         }
 
