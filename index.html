@@ -29,17 +29,13 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* Removed fixed color from .tab-active 
-           Colors are now handled dynamically via utility classes in JS 
-        */
         .tab-active {
-            font-weight: 600; /* Optional: make active tab slightly bolder */
+            font-weight: 600; 
         }
         .tab-inactive {
-            color: #9CA3AF; /* gray-400 */
+            color: #9CA3AF; 
         }
 
-        /* Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -48,8 +44,46 @@
             scrollbar-width: none;
         }
 
+        .minimal-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+        .minimal-input::placeholder {
+            color: #9CA3AF;
+        }
+
+        .subtask-item {
+            transition: all 0.3s ease;
+        }
+        .subtask-done {
+            color: #9CA3AF;
+            text-decoration: line-through;
+        }
+
+        /* Shake Animation for Error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake-error {
+            animation: shake 0.3s ease-in-out;
+            border-bottom: 2px solid #EF4444; /* Red underline */
+        }
+
         .safe-bottom {
             padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        
+        /* Transition for Completed Section */
+        #completedList {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            overflow: hidden;
+        }
+        .chevron-rotate {
+            transition: transform 0.3s ease;
         }
     </style>
 </head>
@@ -58,7 +92,7 @@
     <!-- Header -->
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-gray-200 pt-12 pb-3 px-4 relative flex justify-center items-end">
         <div class="text-center">
-            <h1 class="text-[25px] font-bold text-gray-900" id="headerTitle">待办清单</h1>
+            <h1 class="text-[25px] font-bold text-gray-900" id="headerTitle">念头</h1>
             <p class="text-[10px] text-gray-500 mt-0.5" id="headerSubtitle">大脑用来思考，系统用来记录</p>
         </div>
         <div class="absolute right-4 bottom-3.5 text-xs text-gray-400 font-medium" id="itemCount">0 条记录</div>
@@ -69,183 +103,283 @@
         <!-- Content injected here -->
     </main>
 
-    <!-- Empty State Removed -->
-
-    <!-- Add Button (FAB) - Changed to Red Theme -->
-    <button onclick="openModal()" class="fixed bottom-24 right-6 bg-red-500 hover:bg-red-600 text-white w-14 h-14 rounded-full shadow-lg shadow-red-500/30 flex items-center justify-center text-2xl z-20 transition-transform active:scale-90">
+    <!-- Add Button (FAB) -->
+    <button onclick="openModal(true)" class="fixed bottom-24 right-6 bg-red-500 hover:bg-red-600 text-white w-14 h-14 rounded-full shadow-lg shadow-red-500/30 flex items-center justify-center text-2xl z-20 transition-transform active:scale-90">
         <i class="fas fa-plus"></i>
     </button>
 
-    <!-- Bottom Tab Bar -->
+    <!-- Bottom Tab Bar (Swapped: Ideas Left, Todos Right) -->
     <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center safe-bottom z-20 text-xs font-medium">
-        <button onclick="switchTab('todos')" class="flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200" id="tab-todos">
-            <i class="fas fa-check-circle text-xl"></i>
-            <span>待办</span>
-        </button>
         <button onclick="switchTab('ideas')" class="flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200" id="tab-ideas">
             <i class="fas fa-lightbulb text-xl"></i>
             <span>念头</span>
         </button>
+        <button onclick="switchTab('todos')" class="flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200" id="tab-todos">
+            <i class="fas fa-check-circle text-xl"></i>
+            <span>待办</span>
+        </button>
     </nav>
 
-    <!-- Input Modal -->
-    <div id="inputModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-start justify-center pt-20 transition-opacity duration-200 opacity-0">
-        <div class="bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl transform translate-y-8 transition-transform duration-300 ease-out mx-4" id="modalPanel">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-gray-500 font-medium text-sm">记录新内容</span>
-                <button onclick="closeModal()" class="text-gray-400 bg-gray-100 w-8 h-8 rounded-full"><i class="fas fa-times"></i></button>
+    <!-- Detailed Edit Modal -->
+    <div id="inputModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-end sm:items-center justify-center transition-opacity duration-200 opacity-0">
+        <div class="bg-white w-full sm:max-w-md h-[85vh] sm:h-auto sm:rounded-2xl rounded-t-2xl p-6 shadow-2xl transform translate-y-full transition-transform duration-300 ease-out flex flex-col" id="modalPanel">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex-1">
+                    <textarea id="inputTitle" rows="1" placeholder="准备做什么？" class="minimal-input text-2xl font-bold text-gray-900 resize-none leading-tight" oninput="autoResize(this)"></textarea>
+                </div>
+                <button onclick="closeModal()" class="text-gray-400 bg-gray-100 w-8 h-8 rounded-full flex-shrink-0 ml-4 flex items-center justify-center"><i class="fas fa-times"></i></button>
             </div>
             
-            <textarea id="inputContent" rows="3" placeholder="刚才想到了什么？或者有什么任务？" class="w-full bg-gray-50 text-lg p-3 rounded-xl border-none focus:ring-2 focus:ring-blue-500 mb-4 resize-none"></textarea>
-            
-            <!-- Buttons Swapped: Todo on Left (Red), Idea on Right (Yellow) -->
-            <div class="flex gap-3">
-                <button onclick="saveItem('todo')" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-red-600">
-                    <i class="fas fa-check"></i> 设为待办
-                </button>
-                <button onclick="saveItem('idea')" class="flex-1 bg-yellow-100 text-yellow-700 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-yellow-200">
+            <!-- Scrollable Content Area -->
+            <div class="flex-1 overflow-y-auto no-scrollbar space-y-6">
+                
+                <!-- Time Picker -->
+                <div class="flex items-center gap-3 text-gray-600 bg-gray-50 p-3 rounded-xl">
+                    <i class="far fa-clock text-lg text-gray-400"></i>
+                    <input type="datetime-local" id="inputTime" class="bg-transparent border-none outline-none text-sm font-medium w-full text-gray-700">
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">描述</h4>
+                    <textarea id="inputDesc" rows="2" placeholder="添加详细描述..." class="minimal-input text-base text-gray-700 resize-none" oninput="autoResize(this)"></textarea>
+                </div>
+
+                <!-- Sub-categories (Interactive List) -->
+                <div>
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">小分类</h4>
+                    
+                    <!-- List Container -->
+                    <div id="subtasksList" class="space-y-2 mb-3">
+                        <!-- Subtasks injected by JS -->
+                    </div>
+
+                    <!-- Add New Subtask Input -->
+                    <div class="flex items-center gap-3 text-gray-400">
+                        <i class="fas fa-plus text-sm ml-1"></i>
+                        <input type="text" id="newSubtaskInput" placeholder="添加新分类..." class="minimal-input text-base" onkeypress="handleSubtaskEnter(event)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 mt-2 border-t border-gray-100 flex gap-3 safe-bottom">
+                <button id="btnSaveIdea" onclick="saveItem('idea')" class="flex-1 bg-yellow-100 text-yellow-700 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-yellow-200 transition-transform active:scale-[0.98]">
                     <i class="fas fa-lightbulb"></i> 收入念头
+                </button>
+                <button id="btnSaveTodo" onclick="saveItem('todo')" class="flex-1 bg-red-500 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 active:bg-red-600 shadow-sm transition-transform active:scale-[0.98]">
+                    <i class="fas fa-check"></i> 设为待办
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Custom Alert/Confirm Modal -->
+    <!-- Alert Modal -->
     <div id="alertModal" class="fixed inset-0 bg-black/40 z-[60] hidden flex items-center justify-center transition-opacity duration-300 opacity-0">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-xs mx-4 p-6 text-center transform scale-90 transition-transform duration-300">
             <h3 id="alertTitle" class="text-lg font-semibold text-gray-900 mb-3"></h3>
             <p id="alertMessage" class="text-sm text-gray-600 mb-6"></p>
-            <div id="alertButtons" class="flex gap-3">
-                <!-- Buttons injected here -->
-            </div>
+            <div id="alertButtons" class="flex gap-3"></div>
         </div>
     </div>
 
     <script>
         // Data Structure
-        // Item: { id, text, type: 'idea'|'todo', created, completed: boolean }
         let items = JSON.parse(localStorage.getItem('mindclear_items')) || [];
         
-        let currentTab = 'todos'; 
-
-        // Initialize Tab based on content
-        const todoCount = items.filter(i => i.type === 'todo').length;
-        const ideaCount = items.filter(i => i.type === 'idea').length;
-        if (todoCount === 0 && ideaCount > 0) {
-            currentTab = 'ideas';
-        }
+        let editingItemId = null; 
+        let currentTab = 'ideas'; // Default to ideas as requested
+        let tempSubtasks = []; 
+        let isCompletedOpen = false; 
 
         // DOM Elements
         const mainContainer = document.getElementById('mainContainer');
-        // Removed emptyState element reference
         const inputModal = document.getElementById('inputModal');
         const modalPanel = document.getElementById('modalPanel');
-        const inputContent = document.getElementById('inputContent');
+        
+        const inputTitle = document.getElementById('inputTitle');
+        const inputDesc = document.getElementById('inputDesc');
+        const inputTime = document.getElementById('inputTime');
+        
+        const subtasksList = document.getElementById('subtasksList');
+        const newSubtaskInput = document.getElementById('newSubtaskInput');
+        
+        const btnSaveTodo = document.getElementById('btnSaveTodo');
+        const btnSaveIdea = document.getElementById('btnSaveIdea');
+
         const headerTitle = document.getElementById('headerTitle');
         const itemCount = document.getElementById('itemCount');
         
-        // Custom Alert Elements
         const alertModal = document.getElementById('alertModal');
         const alertTitle = document.getElementById('alertTitle');
         const alertMessage = document.getElementById('alertMessage');
         const alertButtons = document.getElementById('alertButtons');
 
-        // Initial Render
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+
+        function toLocalISOString(date) {
+            const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+            return (new Date(date - tzOffset)).toISOString().slice(0, 16);
+        }
+
         switchTab(currentTab);
 
         // --- Core Functions ---
 
         function switchTab(tab) {
             currentTab = tab;
-            
             const todoBtn = document.getElementById('tab-todos');
             const ideaBtn = document.getElementById('tab-ideas');
 
-            // Reset base classes
             todoBtn.className = "flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200";
             ideaBtn.className = "flex-1 py-3 flex flex-col items-center gap-1 transition-colors duration-200";
 
             if (tab === 'todos') {
-                // Todos Active: Red
                 todoBtn.classList.add('text-red-500', 'tab-active');
                 ideaBtn.classList.add('text-gray-400', 'tab-inactive');
-                
                 headerTitle.innerText = "待办清单";
             } else {
-                // Ideas Active: Yellow
                 todoBtn.classList.add('text-gray-400', 'tab-inactive');
                 ideaBtn.classList.add('text-yellow-600', 'tab-active');
-                
                 headerTitle.innerText = "念头";
             }
-
             render();
         }
 
         function render() {
             mainContainer.innerHTML = '';
             
-            const filteredItems = items
-                .filter(item => item.type === (currentTab === 'ideas' ? 'idea' : 'todo'))
-                .sort((a, b) => b.created - a.created);
+            // Filter by Tab
+            const tabItems = items.filter(item => item.type === (currentTab === 'ideas' ? 'idea' : 'todo'));
+            
+            // Separate Active and Completed
+            const activeItems = tabItems.filter(item => !item.completed);
+            const completedItems = tabItems.filter(item => item.completed);
 
-            itemCount.innerText = `${filteredItems.length} 条`;
+            // Sort Logic for Active Items
+            if (currentTab === 'todos') {
+                activeItems.sort((a, b) => {
+                    const timeA = a.targetTime || a.created;
+                    const timeB = b.targetTime || b.created;
+                    return timeA - timeB;
+                });
+            } else {
+                activeItems.sort((a, b) => {
+                    const timeA = a.ideaUpdated || a.created;
+                    const timeB = b.ideaUpdated || b.created;
+                    return timeB - timeA;
+                });
+            }
+            
+            // Sort Completed Items
+            if (currentTab === 'todos') {
+                 completedItems.sort((a, b) => (a.targetTime || a.created) - (b.targetTime || b.created));
+            } else {
+                 completedItems.sort((a, b) => (b.ideaUpdated || b.created) - (a.ideaUpdated || a.created));
+            }
 
-            // Simplified render logic: no empty state to toggle
-            filteredItems.forEach(item => {
+            itemCount.innerText = `${activeItems.length} 条`;
+
+            // 1. Render Active Items
+            activeItems.forEach(item => {
                 mainContainer.appendChild(createItemElement(item));
             });
+
+            // 2. Render Completed Section if needed
+            if (completedItems.length > 0) {
+                const completedSection = document.createElement('div');
+                completedSection.className = "mt-6";
+                
+                // Header
+                const header = document.createElement('div');
+                header.className = "flex justify-between items-center py-3 px-2 cursor-pointer text-gray-500 font-medium text-sm select-none";
+                header.onclick = toggleCompletedList;
+                
+                const chevronClass = isCompletedOpen ? "transform rotate-90" : "";
+                
+                header.innerHTML = `
+                    <span>折叠起来啦</span>
+                    <div class="flex items-center gap-2">
+                        <span>${completedItems.length}</span>
+                        <i id="chevronIcon" class="fas fa-chevron-right text-xs transition-transform duration-300 ${chevronClass}"></i>
+                    </div>
+                `;
+                completedSection.appendChild(header);
+
+                // List Container
+                const listContainer = document.createElement('div');
+                listContainer.id = "completedList";
+                listContainer.className = "space-y-3";
+                if (!isCompletedOpen) {
+                    listContainer.style.display = 'none';
+                }
+
+                completedItems.forEach(item => {
+                    listContainer.appendChild(createItemElement(item));
+                });
+
+                completedSection.appendChild(listContainer);
+                mainContainer.appendChild(completedSection);
+            }
+        }
+
+        function toggleCompletedList() {
+            isCompletedOpen = !isCompletedOpen;
+            render();
         }
 
         function createItemElement(item) {
             const div = document.createElement('div');
-            div.className = `bg-white p-4 rounded-xl shadow-sm flex items-start gap-3 card-enter ${item.completed ? 'opacity-50' : ''}`;
-            
-            const date = new Date(item.created);
-            const timeStr = `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+            div.className = `bg-white p-4 rounded-xl shadow-sm flex items-start gap-3 card-enter cursor-pointer active:bg-gray-50 transition-colors ${item.completed ? 'opacity-60 bg-gray-50' : ''}`;
+            div.onclick = function() { editItem(item.id); };
+
+            const displayTime = item.targetTime ? new Date(item.targetTime) : new Date(item.created);
+            const timeStr = `${displayTime.getFullYear()}/${displayTime.getMonth()+1}/${displayTime.getDate()} ${String(displayTime.getHours()).padStart(2, '0')}:${String(displayTime.getMinutes()).padStart(2, '0')}`;
 
             let actionBtn = '';
             let mainIcon = '';
 
-            // Icon logic
-            if (item.type === 'idea') {
-                mainIcon = `<div class="mt-1 text-yellow-500 text-lg w-6 text-center"><i class="fas fa-lightbulb"></i></div>`;
-                
-                // Convert to Todo (Now Red Theme)
-                actionBtn = `
-                    <button onclick="convertToTodo(${item.id})" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium ml-auto transition-colors active:scale-[0.98]">
-                        转为待办
-                    </button>
-                `;
-            } else {
-                // Checkbox (Now Red Theme)
-                const checkIcon = item.completed ? 'fa-check-square text-red-500' : 'fa-square text-gray-300';
-                mainIcon = `<button onclick="toggleTodo(${item.id})" class="mt-1 text-2xl transition-colors active:scale-95"><i class="far ${checkIcon}"></i></button>`;
+            const hasSubtasks = (item.subtasks && item.subtasks.length > 0) || (item.subtasksText && item.subtasksText.trim());
+            const hasDetails = (item.desc && item.desc.trim()) || hasSubtasks;
+            const detailBadge = hasDetails ? `<i class="fas fa-align-left text-xs text-gray-400 ml-2"></i>` : '';
 
-                actionBtn = `
-                    <button onclick="convertToIdea(${item.id})" class="text-xs bg-yellow-50 text-yellow-600 px-3 py-1.5 rounded-lg font-medium ml-auto transition-colors active:scale-[0.98]">
-                        转为念头
-                    </button>
-                `;
+            // Icon & Action Logic
+            if (item.type === 'idea') {
+                // Clickable Lightbulb for Ideas
+                const iconColor = item.completed ? 'text-gray-300' : 'text-yellow-500';
+                mainIcon = `<button onclick="event.stopPropagation(); toggleTodo(${item.id})" class="mt-1 text-2xl w-6 text-center transition-colors active:scale-95"><i class="fas fa-lightbulb ${iconColor}"></i></button>`;
+                
+                actionBtn = `<button onclick="event.stopPropagation(); convertToTodo(${item.id})" class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium ml-auto transition-colors active:scale-[0.98]">转为待办</button>`;
+            } else {
+                // Checkbox for Todos
+                const checkIcon = item.completed ? 'fa-check-square text-red-500' : 'fa-square text-gray-300';
+                mainIcon = `<button onclick="event.stopPropagation(); toggleTodo(${item.id})" class="mt-1 text-2xl transition-colors active:scale-95"><i class="far ${checkIcon}"></i></button>`;
+                
+                actionBtn = `<button onclick="event.stopPropagation(); convertToIdea(${item.id})" class="text-xs bg-yellow-50 text-yellow-600 px-3 py-1.5 rounded-lg font-medium ml-auto transition-colors active:scale-[0.98]">转为念头</button>`;
             }
+
+            const textClass = item.completed ? 'line-through text-gray-400' : 'text-gray-800 font-medium';
+            const timeClass = item.completed ? 'text-gray-400' : 'text-blue-500 bg-blue-50 px-2 py-0.5 rounded';
 
             div.innerHTML = `
                 ${mainIcon}
                 <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between">
-                        <p class="text-gray-800 text-base leading-relaxed break-words ${item.completed ? 'line-through text-gray-400' : ''}">
+                        <p class="${textClass} text-base leading-relaxed break-words">
                             ${item.text}
+                            ${detailBadge}
                         </p>
                     </div>
                     <div class="flex items-center justify-between mt-2">
-                        <div class="flex items-center">
-                            <span class="text-xs text-gray-400">${timeStr}</span>
-                        </div>
+                        <span class="text-xs ${timeClass}">${timeStr}</span>
                         <div class="flex items-center gap-2">
                             ${actionBtn}
-                            <button onclick="deleteItem(${item.id})" class="text-gray-300 hover:text-red-500 p-2 -mr-2 transition-colors active:scale-95">
-                                <i class="fas fa-times"></i>
-                            </button>
+                            <button onclick="event.stopPropagation(); deleteItem(${item.id})" class="text-gray-300 hover:text-red-500 p-2 -mr-2 transition-colors active:scale-95"><i class="fas fa-times"></i></button>
                         </div>
                     </div>
                 </div>
@@ -253,29 +387,127 @@
             return div;
         }
 
-        // --- Data Logic ---
+        // --- Subtask Logic ---
+        function renderSubtasksList() {
+            subtasksList.innerHTML = '';
+            tempSubtasks.sort((a, b) => {
+                if (a.done === b.done) return 0;
+                return a.done ? 1 : -1;
+            });
+            tempSubtasks.forEach((sub, index) => {
+                const div = document.createElement('div');
+                div.className = 'subtask-item flex items-start gap-3 p-1';
+                const iconClass = sub.done ? 'fa-check-square text-gray-400' : 'fa-square text-gray-300';
+                const textClass = sub.done ? 'subtask-done' : 'text-gray-700';
+                div.innerHTML = `
+                    <button onclick="toggleSubtask(${index})" class="mt-1 text-lg transition-colors active:scale-90"><i class="far ${iconClass}"></i></button>
+                    <input type="text" value="${sub.text}" class="minimal-input text-base ${textClass}" oninput="updateSubtaskText(${index}, this.value)">
+                    <button onclick="deleteSubtask(${index})" class="text-gray-300 hover:text-red-400 ml-2 px-2"><i class="fas fa-times"></i></button>
+                `;
+                subtasksList.appendChild(div);
+            });
+        }
+        function addSubtask() {
+            const val = newSubtaskInput.value.trim();
+            if (val) {
+                tempSubtasks.push({ text: val, done: false });
+                newSubtaskInput.value = '';
+                renderSubtasksList();
+            }
+        }
+        function handleSubtaskEnter(e) { if (e.key === 'Enter') addSubtask(); }
+        function toggleSubtask(index) { tempSubtasks[index].done = !tempSubtasks[index].done; renderSubtasksList(); }
+        function updateSubtaskText(index, val) { tempSubtasks[index].text = val; }
+        function deleteSubtask(index) { tempSubtasks.splice(index, 1); renderSubtasksList(); }
+
+        // --- Edit/Save Logic ---
+
+        function editItem(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            editingItemId = id;
+            inputTitle.value = item.text || '';
+            inputDesc.value = item.desc || '';
+            if (item.subtasks && Array.isArray(item.subtasks)) {
+                tempSubtasks = JSON.parse(JSON.stringify(item.subtasks));
+            } else if (item.subtasksText) {
+                tempSubtasks = item.subtasksText.split('\n').filter(t => t.trim()).map(t => ({ text: t, done: false }));
+            } else {
+                tempSubtasks = [];
+            }
+            inputTime.value = toLocalISOString(new Date(item.targetTime || item.created));
+            newSubtaskInput.value = '';
+            autoResize(inputTitle);
+            autoResize(inputDesc);
+            renderSubtasksList();
+            
+            // Set Button Text for Edit Mode
+            if (item.type === 'todo') {
+                btnSaveTodo.innerHTML = '<i class="fas fa-check"></i> 保存';
+                btnSaveIdea.innerHTML = '<i class="fas fa-lightbulb"></i> 转为念头';
+            } else {
+                btnSaveIdea.innerHTML = '<i class="fas fa-lightbulb"></i> 保存';
+                btnSaveTodo.innerHTML = '<i class="fas fa-check"></i> 转为待办';
+            }
+
+            openModal(false);
+        }
 
         function saveItem(type) {
-            const text = inputContent.value.trim();
-            if (!text) return;
+            let text = inputTitle.value.trim();
+            const desc = inputDesc.value.trim();
+            const targetTime = inputTime.value ? new Date(inputTime.value).getTime() : Date.now();
+            const pendingSubtask = newSubtaskInput.value.trim();
+            if (pendingSubtask) tempSubtasks.push({ text: pendingSubtask, done: false });
 
-            const newItem = {
-                id: Date.now(),
-                text: text,
-                type: type, 
-                created: Date.now(),
-                completed: false
-            };
+            if (!text) {
+                if (desc) text = desc.length > 15 ? desc.substring(0, 15) + '...' : desc;
+                else if (tempSubtasks.length > 0) text = tempSubtasks[0].text;
+                else if (pendingSubtask) text = pendingSubtask;
+                else {
+                    inputTitle.classList.add('shake-error');
+                    setTimeout(() => inputTitle.classList.remove('shake-error'), 300);
+                    inputTitle.focus();
+                    return;
+                }
+            }
 
-            items.unshift(newItem);
+            if (editingItemId) {
+                const idx = items.findIndex(i => i.id === editingItemId);
+                if (idx > -1) {
+                    items[idx].text = text;
+                    items[idx].desc = desc;
+                    items[idx].subtasks = tempSubtasks; 
+                    delete items[idx].subtasksText; 
+                    items[idx].type = type;
+                    items[idx].targetTime = targetTime;
+                    
+                    if (type === 'idea' && items[idx].type !== 'idea') {
+                        items[idx].ideaUpdated = Date.now();
+                    }
+                }
+            } else {
+                const now = Date.now();
+                const newItem = {
+                    id: now,
+                    text: text,
+                    desc: desc,
+                    subtasks: tempSubtasks,
+                    type: type, 
+                    created: now,
+                    targetTime: targetTime,
+                    ideaUpdated: type === 'idea' ? now : null, 
+                    completed: false
+                };
+                items.unshift(newItem);
+            }
+
             localStorage.setItem('mindclear_items', JSON.stringify(items));
-            
             closeModal();
-            
-            if (currentTab !== 'ideas' && type === 'idea') switchTab('ideas');
-            else if (currentTab !== 'todos' && type === 'todo') switchTab('todos');
-            else render();
+            render(); 
         }
+
+        // --- Utils ---
 
         async function deleteItem(id) {
             const confirmed = await customConfirm('确认删除', '是否将此项永久移除？');
@@ -300,7 +532,7 @@
             if (item) {
                 item.type = 'todo';
                 localStorage.setItem('mindclear_items', JSON.stringify(items));
-                switchTab('todos');
+                render();
             }
         }
 
@@ -309,20 +541,18 @@
             if (item) {
                 item.type = 'idea';
                 item.completed = false;
+                item.ideaUpdated = Date.now(); 
                 localStorage.setItem('mindclear_items', JSON.stringify(items));
-                switchTab('ideas');
+                render(); 
             }
         }
 
-        // --- Modal & Alert Logic ---
-        
+        // --- Modal & Alert ---
         function customConfirm(title, message, isConfirm = true) {
             return new Promise(resolve => {
-                resolveAlertPromise = resolve;
                 alertTitle.innerText = title;
                 alertMessage.innerText = message;
                 alertButtons.innerHTML = ''; 
-
                 const btnClass = "flex-1 py-2 rounded-lg font-medium transition duration-150 active:scale-[0.98]";
                 if (isConfirm) {
                     const cancelBtn = document.createElement('button');
@@ -336,44 +566,53 @@
                 okBtn.className = `${btnClass} ${isConfirm ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'}`;
                 okBtn.onclick = () => { closeAlert(true); };
                 alertButtons.appendChild(okBtn);
-
+                window._alertResolve = resolve;
                 alertModal.classList.remove('hidden');
                 void alertModal.offsetWidth;
                 alertModal.classList.remove('opacity-0');
                 alertModal.querySelector('div').classList.remove('scale-90');
             });
         }
-
         function closeAlert(result) {
             alertModal.classList.add('opacity-0');
             alertModal.querySelector('div').classList.add('scale-90');
             setTimeout(() => {
                 alertModal.classList.add('hidden');
-                if (resolveAlertPromise) {
-                    resolveAlertPromise(result);
-                    resolveAlertPromise = null;
-                }
+                if (window._alertResolve) { window._alertResolve(result); window._alertResolve = null; }
             }, 300);
         }
-
-        function openModal() {
+        function openModal(reset = true) {
             inputModal.classList.remove('hidden');
-            inputContent.focus();
+            if (reset) {
+                editingItemId = null;
+                inputTitle.value = '';
+                inputDesc.value = '';
+                newSubtaskInput.value = ''; 
+                tempSubtasks = []; 
+                renderSubtasksList();
+                inputTime.value = toLocalISOString(new Date());
+
+                // Reset Button Text for New Entry
+                btnSaveIdea.innerHTML = '<i class="fas fa-lightbulb"></i> 收入念头';
+                btnSaveTodo.innerHTML = '<i class="fas fa-check"></i> 设为待办';
+            }
+            setTimeout(() => { inputTitle.focus(); }, 10);
             void inputModal.offsetWidth;
             inputModal.classList.remove('opacity-0');
-            modalPanel.classList.remove('translate-y-8');
+            modalPanel.classList.remove('translate-y-full');
+            autoResize(inputTitle);
+            autoResize(inputDesc);
         }
-
         function closeModal() {
             inputModal.classList.add('opacity-0');
-            modalPanel.classList.add('translate-y-8');
+            modalPanel.classList.add('translate-y-full');
             setTimeout(() => {
                 inputModal.classList.add('hidden');
-                inputContent.value = '';
-                inputContent.blur();
+                inputTitle.blur();
+                inputDesc.blur();
+                newSubtaskInput.blur();
             }, 300);
         }
-
         inputModal.addEventListener('click', (e) => {
             if (e.target === inputModal) closeModal();
         });
